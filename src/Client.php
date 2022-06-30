@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SharkMachine\Lib\StopForumSpan;
 
 use Exception;
+use ParagonIE\HiddenString\HiddenString;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
@@ -39,15 +40,22 @@ class Client
     private UriFactoryInterface $uriFactory;
 
     /**
+     * @var HiddenString|null
+     */
+    private ?HiddenString $apiKey;
+
+    /**
      * @param ClientInterface         $client
      * @param RequestFactoryInterface $requestFactory
      * @param UriFactoryInterface     $uriFactory
+     * @param HiddenString|null       $apiKey
      * @param string|null             $url
      */
     public function __construct(
         ClientInterface $client,
         RequestFactoryInterface $requestFactory,
         UriFactoryInterface $uriFactory,
+        ?HiddenString $apiKey = null,
         ?string $url = null
     ) {
         if (null !== $url) {
@@ -56,6 +64,7 @@ class Client
         $this->client         = $client;
         $this->requestFactory = $requestFactory;
         $this->uriFactory     = $uriFactory;
+        $this->apiKey         = $apiKey;
     }
 
     /**
@@ -101,6 +110,32 @@ class Client
         $uri      = $this->uriFactory->createUri($this->url)->withQuery('username=' . urlencode($ipAddress));
         $request  = $this->requestFactory->createRequest(self::METHOD_GET, $uri);
         return $this->parseResponse($this->client->sendRequest($request));
+    }
+
+    /**
+     * @param string $username
+     * @param string $ipAddress
+     * @param string $email
+     * @param string $evidence
+     *
+     * @return void
+     * @throws ClientExceptionInterface
+     */
+    public function addToDatabase(string $username, string $ipAddress, string $email, string $evidence): void
+    {
+        $uri = $this->uriFactory->createUri($this->url)->withQuery(
+            http_build_query(
+                [
+                    'username' => $username,
+                    'ip_addr'  => $ipAddress,
+                    'email'    => $email,
+                    'evidence' => $evidence,
+                    'api_key'  => $this->apiKey->getString(),
+                ]
+            )
+        );
+
+        $this->client->sendRequest($this->requestFactory->createRequest(self::METHOD_GET, $uri));
     }
 
     /**
