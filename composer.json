@@ -1,6 +1,6 @@
 {
   "name": "sharkmachine/stop-forum-spam",
-  "description": "Stop Forum Span PHP Client",
+  "description": "Stop Forum Spam PHP Client",
   "license": "BSD-3-Clause",
 
   "require": {
